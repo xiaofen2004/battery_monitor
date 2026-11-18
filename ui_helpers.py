@@ -37,22 +37,29 @@ def apply_theme(root, scale):
     style.configure("TLabel", background="white", foreground="#334155")
     style.configure("Muted.TLabel", foreground="#718096", font=("Microsoft YaHei UI", 9))
     style.configure("Section.TLabel", foreground="#172b4d", font=("Microsoft YaHei UI", 11, "bold"))
-    style.configure("Header.TFrame", background="#12243a")
-    style.configure("Header.TLabel", background="#12243a", foreground="#f8fafc", font=("Microsoft YaHei UI", 19, "bold"))
-    style.configure("Subtitle.TLabel", background="#12243a", foreground="#b6c7dd", font=("Microsoft YaHei UI", 9))
+    style.layout("TButton", [("Button.border", {"sticky": "nswe", "border": "1", "children": [
+        ("Button.padding", {"sticky": "nswe", "children": [("Button.label", {"sticky": "nswe"})]})]})])
     style.configure("TButton", background="#f1f5fa", foreground="#334155", borderwidth=0,
-                    padding=(px(11), px(7)), focusthickness=1, focuscolor="#94b7ec")
-    style.map("TButton", background=[("active", "#e2eaf5"), ("disabled", "#f1f5f9")],
+                    bordercolor="#f1f5fa", lightcolor="#f1f5fa", darkcolor="#f1f5fa", padding=(px(11), px(7)))
+    style.map("TButton", background=[("pressed", "#d5e0ef"), ("active", "#e2eaf5"), ("disabled", "#f1f5f9")],
+              bordercolor=[("active", "#e2eaf5")], lightcolor=[("active", "#e2eaf5")], darkcolor=[("active", "#e2eaf5")],
               foreground=[("disabled", "#94a3b8")])
-    style.configure("Primary.TButton", background="#2563eb", foreground="white", font=("Microsoft YaHei UI", 10, "bold"))
-    style.map("Primary.TButton", background=[("active", "#1d4ed8"), ("disabled", "#a9bfe8")], foreground=[("disabled", "white")])
+    style.configure("Primary.TButton", background="#2563eb", foreground="white", bordercolor="#2563eb",
+                    lightcolor="#2563eb", darkcolor="#2563eb", font=("Microsoft YaHei UI", 10, "bold"))
+    style.map("Primary.TButton", background=[("pressed", "#1e40af"), ("active", "#1d4ed8"), ("disabled", "#a9bfe8")],
+              bordercolor=[("active", "#1d4ed8")], lightcolor=[("active", "#1d4ed8")], darkcolor=[("active", "#1d4ed8")],
+              foreground=[("disabled", "white")])
     style.configure("TEntry", fieldbackground="#f8fafc", bordercolor="#d9e2ef", lightcolor="#d9e2ef", darkcolor="#d9e2ef", padding=px(6))
     style.configure("TCombobox", fieldbackground="#f8fafc", background="#e9eff7", bordercolor="#d9e2ef",
                     lightcolor="#d9e2ef", darkcolor="#d9e2ef", arrowsize=px(13), padding=px(5))
     style.map("TCombobox", fieldbackground=[("readonly", "#f8fafc"), ("disabled", "#f1f5f9")],
               foreground=[("disabled", "#a0aec0")], selectbackground=[("readonly", "#e6eefc")], selectforeground=[("readonly", "#1e293b")])
-    style.configure("TCheckbutton", background="white", padding=(0, px(4)))
-    style.map("TCheckbutton", background=[("active", "white")])
+    style.configure("TCheckbutton", background="white", padding=(0, px(4)), focusthickness=0,
+                    indicatorbackground="white", indicatorforeground="white", indicatorsize=px(14),
+                    upperbordercolor="#b8c6d9", lowerbordercolor="#b8c6d9")
+    style.map("TCheckbutton", background=[("active", "white")],
+              indicatorbackground=[("selected", "#2563eb"), ("active", "#eef3fb")],
+              upperbordercolor=[("selected", "#2563eb")], lowerbordercolor=[("selected", "#2563eb")])
     style.configure("TNotebook", background="white", borderwidth=0, tabmargins=0)
     style.configure("TNotebook.Tab", padding=(px(12), px(8)), background="#edf2f7", foreground="#64748b")
     style.map("TNotebook.Tab", background=[("selected", "white")], foreground=[("selected", "#2563eb")])

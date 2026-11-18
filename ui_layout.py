@@ -10,14 +10,9 @@ from plotting import fit_bottom_margin
 def build_ui(app):
     p = app.px
     app.columnconfigure(0, weight=1)
-    app.rowconfigure(1, weight=1)
-    header = ttk.Frame(app, style="Header.TFrame", padding=(p(22), p(15)))
-    header.grid(row=0, column=0, sticky="ew")
-    ttk.Label(header, text="电池实验监测", style="Header.TLabel").pack(side="left")
-    ttk.Label(header, text="应变 · 电压 · 电流    /    只读查看", style="Subtitle.TLabel").pack(side="right")
-
+    app.rowconfigure(0, weight=1)
     app.content = ttk.Frame(app, padding=p(12))
-    app.content.grid(row=1, column=0, sticky="nsew")
+    app.content.grid(row=0, column=0, sticky="nsew")
     app.content.columnconfigure(1, weight=1)
     app.content.rowconfigure(0, weight=1)
     app.sidebar = ttk.Frame(app.content, style="Card.TFrame", width=p(330))
@@ -140,10 +135,12 @@ def build_ui(app):
     app.toolbar.configure(background="white")
     app.toolbar.grid(row=1, column=0, sticky="ew")
     for widget in app.toolbar.winfo_children():
-        try:
-            widget.configure(background="white")
-        except tk.TclError:
-            pass
+        for option, value in (("background", "white"), ("activebackground", "#e2eaf5"),
+                              ("highlightthickness", 0), ("relief", "flat"), ("overrelief", "flat"), ("offrelief", "flat")):
+            try:
+                widget.configure(**{option: value})
+            except tk.TclError:
+                pass
 
     footer = ttk.Frame(right, style="Card.TFrame")
     footer.grid(row=4, column=0, sticky="ew", pady=(p(8), 0))

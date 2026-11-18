@@ -34,6 +34,8 @@ class MonitorApp(tk.Tk):
         self.events = queue.Queue()
         self.cancel_event = threading.Event()
         self.busy = False
+        self.busy_job = None
+        self.progress_text = ""
         self.reader = None
         self.battery_reader = BatteryReader()
         self.plot_data = None
@@ -125,10 +127,14 @@ class MonitorApp(tk.Tk):
         self._save_settings(values)
         self.busy = True
         self.cancel_event.clear()
-        self.refresh_button.configure(state="disabled")
-        self.cancel_button.configure(state="normal")
-        self.status.set("正在读取文件；窗口可继续操作。")
+        self.progress_text = "正在读取文件；窗口可继续操作。"
+        self.busy_job = self.after(400, self._show_busy)
         threading.Thread(target=self._worker, args=(values, cfg), daemon=True).start()
+
+    def _show_busy(self):
+        self.busy_job = None
+        self.cancel_button.configure(state="normal")
+        self.status.set(self.progress_text)
 
     def _worker(self, values, cfg):
         progress = lambda text: self.events.put(("progress", text))
@@ -155,7 +161,9 @@ class MonitorApp(tk.Tk):
             while True:
                 kind, payload = self.events.get_nowait()
                 if kind == "progress":
-                    self.status.set(payload)
+                    self.progress_text = payload
+                    if self.busy_job is None:
+                        self.status.set(payload)
                 elif kind == "done":
                     data, channels, values = payload
                     self.plot_data, self.last_context = data, values
@@ -195,7 +203,9 @@ class MonitorApp(tk.Tk):
         import time
         self.busy = False
         self.last_done = time.monotonic()
-        self.refresh_button.configure(state="normal")
+        if self.busy_job is not None:
+            self.after_cancel(self.busy_job)
+            self.busy_job = None
         self.cancel_button.configure(state="disabled")
 
     def _log(self, text):
