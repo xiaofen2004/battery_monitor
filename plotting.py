@@ -45,7 +45,7 @@ def fit_bottom_margin(figure):
         height = figure.get_figheight()
         bottom = min(.22, max(.09, .68 / height))
         figure.subplots_adjust(bottom=bottom, top=max(bottom + .1, 1 - getattr(figure, "header_inches", .9) / height),
-                               left=min(.2, max(.105, .85 / figure.get_figwidth())))
+                               left=min(.22, max(.105, getattr(figure, "left_inches", .85) / figure.get_figwidth())))
 
 
 def from_top(figure, points):
@@ -64,28 +64,27 @@ def draw_plot(data, figure=None):
     colors = ["#2563ad", "#108875", "#d45a3c"]
     curves = []
     ylabel = "Δ 微应变 / με" if data.settings.delta else "微应变 / με"
+    unit = data.settings.time_unit
+    scale = 60 if unit == "min" else 1
 
     def curve(axis, t, y, color, label, battery=False):
         if battery:
             t, y = battery_line(t, y)
         tx, yy = display_points(t, y)
-        line, = axis.plot(tx / 60, yy, color=color, lw=1.25, label=label, zorder=3)
+        line, = axis.plot(tx / scale, yy, color=color, lw=1.25, label=label, zorder=3)
         curves.append(line)
         return line
 
     for i, (channel, values) in enumerate(strains.items()):
         axis = axes[i] if split else axes[0]
         color = colors[i]
-        line = curve(axis, data.strain_t, values, color, channel)
+        curve(axis, data.strain_t, values, color, channel)
         compact_ylabel = "Δε / με" if data.settings.delta else "ε / με"
-        axis.set_ylabel(compact_ylabel if split else ylabel, fontsize=10, labelpad=10)
+        axis.set_ylabel(f"{channel}\n{compact_ylabel}" if split else ylabel, fontsize=10, labelpad=8)
         if split or len(strains) == 1:
             axis.tick_params(axis="y", colors=color)
             axis.yaxis.label.set_color(color)
         if split:
-            tag = axis.legend([line], [channel], loc="best", handlelength=0, handletextpad=0, borderaxespad=.4,
-                              borderpad=.25, framealpha=.85, edgecolor="none", fontsize=10)
-            tag.get_texts()[0].set(color=color, weight="bold")
             axis.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
 
     if combined:
@@ -100,19 +99,16 @@ def draw_plot(data, figure=None):
             axis.tick_params(axis="y", colors=color)
             if split:
                 axis.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
-        if split:
-            voltage.text(.012, .90, "电参数", transform=voltage.transAxes, va="top", fontsize=10,
-                         color="#475569", bbox=dict(facecolor="white", edgecolor="none", alpha=.85, pad=2))
 
     end = max(data.strain_t[-1] if len(data.strain_t) else 0,
-              data.battery_t[-1] if len(data.battery_t) else 0) / 60
-    axes[-1].set_xlim(0, max(end, 1 / 60))
-    axes[-1].set_xlabel("对齐后时间 / min" if combined else "采集经过时间 / min", color="#475569", labelpad=8)
+              data.battery_t[-1] if len(data.battery_t) else 0) / scale
+    axes[-1].set_xlim(0, max(end, 1 / scale))
+    axes[-1].set_xlabel(("对齐后时间" if combined else "采集经过时间") + f" / {unit}", color="#475569", labelpad=8)
     for axis in axes:
         axis.set_facecolor("#ffffff")
         for start, stop, kind in data.spans:
             if kind in STAGE_COLORS:
-                axis.axvspan(start / 60, stop / 60, color=STAGE_COLORS[kind], zorder=0)
+                axis.axvspan(start / scale, stop / scale, color=STAGE_COLORS[kind], zorder=0)
         axis.grid(True, color="#d7e0ea", linewidth=.6, alpha=.65)
         axis.margins(y=.13)
         axis.tick_params(axis="x", labelsize=9, colors="#64748b", length=3)
@@ -136,6 +132,9 @@ def draw_plot(data, figure=None):
                frameon=False, fontsize=9, borderaxespad=0, columnspacing=1.8)
     right = .89 if split and combined else (.77 if combined else .965)
     fig.header_inches = (85 if combined else 66) / 72
+    fig.left_inches = 1.05 if split else .85
+    if split:
+        fig.align_ylabels(axes)
     fig.subplots_adjust(left=.105, right=right, hspace=.20)
     fit_bottom_margin(fig)
     return fig

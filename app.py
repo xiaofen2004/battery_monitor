@@ -106,10 +106,24 @@ class MonitorApp(tk.Tk):
         layout = "subplots" if self.fields["plot_layout"].get() == "分通道子图" else "overlay"
         self.layout_hint.set("独立纵轴 · 共用时间轴" if layout == "subplots" else "共用应变纵轴")
         if self.plot_data is not None:
-            self.plot_data.settings = replace(self.plot_data.settings, plot_layout=layout)
+            self.plot_data.settings = replace(self.plot_data.settings, plot_layout=layout,
+                                              time_unit=self.fields["time_unit"].get())
+            self._show_summary()
             draw_plot(self.plot_data, self.figure)
             self.canvas.draw_idle()
             self.toolbar.update()
+
+    def _show_summary(self):
+        data = self.plot_data
+        unit = data.settings.time_unit
+        scale = 60 if unit == "min" else 1
+        strain_end = data.strain_t[-1] if len(data.strain_t) else 0
+        battery_end = data.battery_t[-1] if len(data.battery_t) else 0
+        baselines = "；".join(f"{ch} {v:.6f}" for ch, v in data.baselines.items())
+        summary = f"各通道首值 / με：{baselines}  |  应变末点 {strain_end / scale:.2f} {unit}"
+        if data.settings.include_battery:
+            summary += f"  |  电池末点 {battery_end / scale:.2f} {unit}"
+        self.summary.set(summary)
 
     def _settings(self):
         values = {k: v.get().strip() for k, v in self.fields.items()}
@@ -123,7 +137,8 @@ class MonitorApp(tk.Tk):
                        offset_s=float(values["offset"]) if combined else 0,
                        battery_mode={"自动（优先总时间）": "auto", "表内绝对时间": "absolute", "固定 100 Hz 逐行重建": "fixed"}[values["battery_time"]] if combined else "auto",
                        include_battery=combined,
-                       plot_layout="subplots" if values["plot_layout"] == "分通道子图" else "overlay")
+                       plot_layout="subplots" if values["plot_layout"] == "分通道子图" else "overlay",
+                       time_unit=values["time_unit"])
         cfg.validate()
         for key in (("strain_file", "battery_file") if combined else ("strain_file",)):
             if not Path(values[key]).is_file():
@@ -186,13 +201,6 @@ class MonitorApp(tk.Tk):
                         box.configure(values=(["不选"] if i else []) + channels)
                     self._layout_changed()
                     self.status.set("已更新 " + datetime.now().strftime("%H:%M:%S") + " · 源文件只读")
-                    strain_end = data.strain_t[-1] if len(data.strain_t) else 0
-                    battery_end = data.battery_t[-1] if len(data.battery_t) else 0
-                    baselines = "；".join(f"{ch} {v:.6f}" for ch, v in data.baselines.items())
-                    summary = f"各通道首值 / με：{baselines}  |  应变末点 {strain_end / 60:.2f} min"
-                    if data.settings.include_battery:
-                        summary += f"  |  电池末点 {battery_end / 60:.2f} min"
-                    self.summary.set(summary)
                     self._log("\n".join(data.notes))
                     self._finish()
                 elif kind == "error":

@@ -20,6 +20,7 @@ class Settings:
     battery_mode: str = "auto"
     include_battery: bool = True
     plot_layout: str = "overlay"
+    time_unit: str = "min"
 
     @property
     def selected_channels(self):
@@ -38,6 +39,8 @@ class Settings:
         self.selected_channels
         if self.plot_layout not in ("overlay", "subplots"):
             raise ValueError("请选择同图叠加或分通道子图。")
+        if self.time_unit not in ("min", "s"):
+            raise ValueError("时间单位须为 min 或 s。")
         if not all(np.isfinite(v) for v in (self.strain_hz, self.output_hz, self.cutoff_hz, self.offset_s)):
             raise ValueError("频率和偏移必须为有限数字。")
         if self.strain_hz < 0 or self.output_hz <= 0 or self.cutoff_hz < 0:

@@ -116,6 +116,10 @@ def build_ui(app):
     layout.bind("<<ComboboxSelected>>", app._layout_changed)
     app.layout_hint = tk.StringVar(value="共用应变纵轴")
     ttk.Label(display, textvariable=app.layout_hint, style="Muted.TLabel").pack(side="left", padx=p(10))
+    ttk.Label(display, text="时间单位").pack(side="left", padx=(p(8), p(8)))
+    unit = ttk.Combobox(display, textvariable=app.var("time_unit", "min"), values=["min", "s"], state="readonly", width=4)
+    unit.pack(side="left")
+    unit.bind("<<ComboboxSelected>>", app._layout_changed)
 
     actions = ttk.Frame(right, style="Card.TFrame")
     actions.grid(row=1, column=0, sticky="ew", pady=(0, p(12)))
