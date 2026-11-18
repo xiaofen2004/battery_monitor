@@ -91,6 +91,7 @@ class MonitorApp(tk.Tk):
             self.sidebar.grid()
             self.config_button.configure(text="隐藏设置")
         self.config_visible = not self.config_visible
+        self.scroll_area.refresh()
 
     def toggle_details(self):
         if self.details_visible:

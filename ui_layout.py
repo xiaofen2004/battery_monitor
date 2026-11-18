@@ -3,15 +3,28 @@ import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-from ui_helpers import ScrollPanel
+from ui_helpers import ScrollArea, ScrollPanel
 from plotting import fit_bottom_margin
+
+TOOL_TIPS = {"Home": "回到完整视图", "Back": "上一个视图", "Forward": "下一个视图",
+             "Pan": "平移：左键拖动平移，右键拖动缩放坐标轴", "Zoom": "缩放：左键框选放大，右键框选缩小",
+             "Subplots": "调整边距与子图间距", "Save": "按当前屏幕显示保存图像"}
+
+
+class ChartToolbar(NavigationToolbar2Tk):
+    toolitems = [(name, TOOL_TIPS.get(name, tip), image, method)
+                 for name, tip, image, method in NavigationToolbar2Tk.toolitems]
 
 
 def build_ui(app):
     p = app.px
     app.columnconfigure(0, weight=1)
     app.rowconfigure(0, weight=1)
-    app.content = ttk.Frame(app, padding=p(12))
+    app.scroll_area = ScrollArea(app, lambda: (p(600) + (p(342) if app.config_visible else 0), p(600)))
+    app.scroll_area.grid(row=0, column=0, sticky="nsew")
+    app.scroll_area.body.columnconfigure(0, weight=1)
+    app.scroll_area.body.rowconfigure(0, weight=1)
+    app.content = ttk.Frame(app.scroll_area.body, padding=p(12))
     app.content.grid(row=0, column=0, sticky="nsew")
     app.content.columnconfigure(1, weight=1)
     app.content.rowconfigure(0, weight=1)
@@ -85,6 +98,7 @@ def build_ui(app):
                                    ["自动（优先总时间）", "表内绝对时间", "固定 100 Hz 逐行重建"])
     first.bind_scrolling()
     second.bind_scrolling()
+    app.scroll_area.bind_scrolling()
 
     right = ttk.Frame(app.content, style="Card.TFrame", padding=p(14))
     right.grid(row=0, column=1, sticky="nsew")
@@ -136,7 +150,7 @@ def build_ui(app):
     app.canvas.mpl_connect("resize_event", lambda event: fit_bottom_margin(app.figure))
     app.canvas.get_tk_widget().configure(highlightthickness=0, borderwidth=0)
     app.canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
-    app.toolbar = NavigationToolbar2Tk(app.canvas, chart, pack_toolbar=False)
+    app.toolbar = ChartToolbar(app.canvas, chart, pack_toolbar=False)
     app.toolbar.configure(background="white")
     app.toolbar.grid(row=1, column=0, sticky="ew")
     for widget in app.toolbar.winfo_children():

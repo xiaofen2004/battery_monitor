@@ -64,8 +64,54 @@ def apply_theme(root, scale):
     style.configure("TNotebook.Tab", padding=(px(12), px(8)), background="#edf2f7", foreground="#64748b")
     style.map("TNotebook.Tab", background=[("selected", "white")], foreground=[("selected", "#2563eb")],
               padding=[("selected", (px(12), px(8)))], expand=[("selected", (0, 0, 0, 0))])
-    style.configure("Vertical.TScrollbar", background="#d5dfed", troughcolor="#f8fafc", borderwidth=0, arrowsize=px(10))
+    for orient in ("Vertical", "Horizontal"):
+        style.configure(f"{orient}.TScrollbar", background="#d5dfed", troughcolor="#f8fafc", borderwidth=0, arrowsize=px(10),
+                        bordercolor="#f8fafc", lightcolor="#d5dfed", darkcolor="#d5dfed", arrowcolor="#64748b")
+        style.map(f"{orient}.TScrollbar", background=[("active", "#b8c6d9")])
     return px
+
+
+class ScrollArea(ttk.Frame):
+    """窗口小于内容最小尺寸时出现上下、左右滚动条；足够大时内容铺满窗口。"""
+
+    def __init__(self, parent, min_size):
+        super().__init__(parent)
+        self.min_size = min_size
+        self.canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0, bg="#edf2f7", width=1, height=1)
+        self.vbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.hbar = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
+        self.canvas.configure(yscrollcommand=self.vbar.set, xscrollcommand=self.hbar.set)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.body = ttk.Frame(self.canvas)
+        self.item = self.canvas.create_window((0, 0), window=self.body, anchor="nw")
+        self.bind("<Configure>", lambda e: self.refresh())
+
+    def refresh(self):
+        width, height = self.winfo_width(), self.winfo_height()
+        min_w, min_h = self.min_size()
+        bar = self.vbar.winfo_reqwidth()
+        need_h = width < min_w
+        need_v = height - (bar if need_h else 0) < min_h
+        need_h = width - (bar if need_v else 0) < min_w
+        for scrollbar, needed, place in ((self.vbar, need_v, dict(row=0, column=1, sticky="ns")),
+                                         (self.hbar, need_h, dict(row=1, column=0, sticky="ew"))):
+            scrollbar.grid(**place) if needed else scrollbar.grid_remove()
+        body_w = max(width - (bar if need_v else 0), min_w)
+        body_h = max(height - (bar if need_h else 0), min_h)
+        self.canvas.itemconfigure(self.item, width=body_w, height=body_h)
+        self.canvas.configure(scrollregion=(0, 0, body_w, body_h))
+
+    def bind_scrolling(self):
+        def wheel(event, axis):
+            if isinstance(event.widget, str) or event.widget.winfo_class() in ("Text", "Listbox"):
+                return
+            view = self.canvas.xview if axis == "x" else self.canvas.yview
+            if view() != (0.0, 1.0):
+                view("scroll", -int(event.delta / 120) if abs(event.delta) >= 120 else (-1 if event.delta > 0 else 1), "units")
+        self.bind_all("<MouseWheel>", lambda e: wheel(e, "y"))
+        self.bind_all("<Shift-MouseWheel>", lambda e: wheel(e, "x"))
 
 
 class ScrollPanel(ttk.Frame):

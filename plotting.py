@@ -44,7 +44,8 @@ def fit_bottom_margin(figure):
     if figure.axes:
         height = figure.get_figheight()
         bottom = min(.22, max(.09, .68 / height))
-        figure.subplots_adjust(bottom=bottom, top=max(bottom + .1, 1 - getattr(figure, "header_inches", .9) / height))
+        figure.subplots_adjust(bottom=bottom, top=max(bottom + .1, 1 - getattr(figure, "header_inches", .9) / height),
+                               left=min(.2, max(.105, .85 / figure.get_figwidth())))
 
 
 def from_top(figure, points):
