@@ -101,6 +101,8 @@ class MonitorApp(tk.Tk):
             self.log.grid(row=5, column=0, sticky="ew", pady=(self.px(8), 0))
             self.details_button.configure(text="收起详情")
         self.details_visible = not self.details_visible
+        self.update_idletasks()
+        self.scroll_area.refresh()
 
     def _layout_changed(self, event=None):
         layout = "subplots" if self.fields["plot_layout"].get() == "分通道子图" else "overlay"
@@ -112,6 +114,13 @@ class MonitorApp(tk.Tk):
             draw_plot(self.plot_data, self.figure)
             self.canvas.draw_idle()
             self.toolbar.update()
+        self.scroll_area.refresh()
+
+    def plot_rows(self):
+        data = self.plot_data
+        if data is None or data.settings.plot_layout != "subplots":
+            return 1
+        return len(data.strains or [data.settings.channel]) + int(data.settings.include_battery)
 
     def _show_summary(self):
         data = self.plot_data

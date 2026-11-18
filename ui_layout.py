@@ -20,7 +20,13 @@ def build_ui(app):
     p = app.px
     app.columnconfigure(0, weight=1)
     app.rowconfigure(0, weight=1)
-    app.scroll_area = ScrollArea(app, lambda: (p(600) + (p(342) if app.config_visible else 0), p(600)))
+    def min_size():
+        rows = app.plot_rows()
+        plot = p(220) if rows == 1 else rows * p(120)
+        controls = app.right_panel.winfo_reqheight() if hasattr(app, "right_panel") else p(260)
+        return p(600) + (p(342) if app.config_visible else 0), controls + p(24) + p(200) + plot
+
+    app.scroll_area = ScrollArea(app, min_size)
     app.scroll_area.grid(row=0, column=0, sticky="nsew")
     app.scroll_area.body.columnconfigure(0, weight=1)
     app.scroll_area.body.rowconfigure(0, weight=1)
@@ -100,7 +106,7 @@ def build_ui(app):
     second.bind_scrolling()
     app.scroll_area.bind_scrolling()
 
-    right = ttk.Frame(app.content, style="Card.TFrame", padding=p(14))
+    right = app.right_panel = ttk.Frame(app.content, style="Card.TFrame", padding=p(14))
     right.grid(row=0, column=1, sticky="nsew")
     right.columnconfigure(0, weight=1)
     right.rowconfigure(3, weight=1)
@@ -189,3 +195,4 @@ def build_ui(app):
             else:
                 outputs.grid(row=0, column=2, columnspan=1, sticky="e", pady=0)
     right.bind("<Configure>", reflow)
+    app.scroll_area.watch(display, actions, summary, footer, app.log)

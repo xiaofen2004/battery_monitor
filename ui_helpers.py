@@ -86,9 +86,21 @@ class ScrollArea(ttk.Frame):
         self.rowconfigure(0, weight=1)
         self.body = ttk.Frame(self.canvas)
         self.item = self.canvas.create_window((0, 0), window=self.body, anchor="nw")
+        self.pending = None
         self.bind("<Configure>", lambda e: self.refresh())
 
+    def watch(self, *widgets):
+        for widget in widgets:
+            widget.bind("<Configure>", lambda e: self.schedule_refresh(), add="+")
+
+    def schedule_refresh(self):
+        if self.pending is None:
+            self.pending = self.after_idle(self.refresh)
+
     def refresh(self):
+        if self.pending is not None:
+            self.after_cancel(self.pending)
+            self.pending = None
         width, height = self.winfo_width(), self.winfo_height()
         min_w, min_h = self.min_size()
         bar = self.vbar.winfo_reqwidth()
