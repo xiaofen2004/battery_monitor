@@ -105,16 +105,21 @@ def build_ui(app):
 
     actions = ttk.Frame(right, style="Card.TFrame")
     actions.grid(row=1, column=0, sticky="ew", pady=(0, p(12)))
-    app.refresh_button = ttk.Button(actions, text="读取并绘图", style="Primary.TButton", command=app.refresh)
+    actions.columnconfigure(1, weight=1)
+    run = ttk.Frame(actions, style="Card.TFrame")
+    run.grid(row=0, column=0, sticky="w")
+    app.refresh_button = ttk.Button(run, text="读取并绘图", style="Primary.TButton", command=app.refresh)
     app.refresh_button.pack(side="left")
-    app.cancel_button = ttk.Button(actions, text="取消", command=app.cancel_event.set, state="disabled")
+    app.cancel_button = ttk.Button(run, text="取消", command=app.cancel_event.set, state="disabled")
     app.cancel_button.pack(side="left", padx=p(5))
     app.auto = tk.BooleanVar(value=False)
-    ttk.Checkbutton(actions, text="自动刷新", variable=app.auto).pack(side="left", padx=(p(6), p(4)))
-    ttk.Entry(actions, textvariable=app.var("interval", "10"), width=4).pack(side="left")
-    ttk.Label(actions, text="秒").pack(side="left", padx=p(5))
-    ttk.Button(actions, text="导出 CSV", command=app.export_data).pack(side="right")
-    ttk.Button(actions, text="保存图片", command=app.save_image).pack(side="right", padx=p(5))
+    ttk.Checkbutton(run, text="自动刷新", variable=app.auto).pack(side="left", padx=(p(6), p(4)))
+    ttk.Entry(run, textvariable=app.var("interval", "10"), width=4).pack(side="left")
+    ttk.Label(run, text="秒").pack(side="left", padx=p(5))
+    outputs = ttk.Frame(actions, style="Card.TFrame")
+    outputs.grid(row=0, column=2, sticky="e")
+    ttk.Button(outputs, text="保存图片", command=app.save_image).pack(side="left", padx=(0, p(5)))
+    ttk.Button(outputs, text="导出 CSV", command=app.export_data).pack(side="left")
 
     app.summary = tk.StringVar(value="选择应变文件和通道，开始查看采集数据。")
     summary = ttk.Label(right, textvariable=app.summary, style="Muted.TLabel", padding=(p(5), p(7)))
@@ -153,5 +158,16 @@ def build_ui(app):
     app.log = tk.Text(right, height=5, wrap="word", relief="flat", bg="#f1f5fa", fg="#425570",
                       borderwidth=0, padx=p(10), pady=p(8), state="disabled", font=("Microsoft YaHei UI", 9))
     app.details_visible = False
-    right.bind("<Configure>", lambda e: (summary.configure(wraplength=max(p(200), e.width - p(40))),
-                                           status.configure(wraplength=max(p(200), e.width - p(150)))))
+    wrapped = [False]
+
+    def reflow(event):
+        summary.configure(wraplength=max(p(200), event.width - p(40)))
+        status.configure(wraplength=max(p(200), event.width - p(150)))
+        wrap = event.width - p(28) < run.winfo_reqwidth() + outputs.winfo_reqwidth() + p(16)
+        if wrap != wrapped[0]:
+            wrapped[0] = wrap
+            if wrap:
+                outputs.grid(row=1, column=0, columnspan=3, sticky="w", pady=(p(8), 0))
+            else:
+                outputs.grid(row=0, column=2, columnspan=1, sticky="e", pady=0)
+    right.bind("<Configure>", reflow)

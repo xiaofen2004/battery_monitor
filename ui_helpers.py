@@ -62,7 +62,8 @@ def apply_theme(root, scale):
               upperbordercolor=[("selected", "#2563eb")], lowerbordercolor=[("selected", "#2563eb")])
     style.configure("TNotebook", background="white", borderwidth=0, tabmargins=0)
     style.configure("TNotebook.Tab", padding=(px(12), px(8)), background="#edf2f7", foreground="#64748b")
-    style.map("TNotebook.Tab", background=[("selected", "white")], foreground=[("selected", "#2563eb")])
+    style.map("TNotebook.Tab", background=[("selected", "white")], foreground=[("selected", "#2563eb")],
+              padding=[("selected", (px(12), px(8)))], expand=[("selected", (0, 0, 0, 0))])
     style.configure("Vertical.TScrollbar", background="#d5dfed", troughcolor="#f8fafc", borderwidth=0, arrowsize=px(10))
     return px
 

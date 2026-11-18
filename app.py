@@ -30,7 +30,7 @@ class MonitorApp(tk.Tk):
         self.px = apply_theme(self, self.ui_scale)
         width, height = min(self.px(1500), int(screen_w * .94)), min(self.px(930), int(screen_h * .88))
         self.geometry(f"{width}x{height}+{max(0, (screen_w-width)//2)}+{self.px(20)}")
-        self.minsize(min(self.px(1050), int(screen_w*.92)), min(self.px(650), int(screen_h*.86)))
+        self.minsize(min(self.px(640), int(screen_w*.6)), min(self.px(460), int(screen_h*.6)))
         self.events = queue.Queue()
         self.cancel_event = threading.Event()
         self.busy = False
@@ -46,6 +46,9 @@ class MonitorApp(tk.Tk):
         self._load_settings()
         self._mode_changed()
         self._layout_changed()
+        self.narrow = False
+        self.config_auto_hidden = False
+        self.bind("<Configure>", self._window_resized)
         self.protocol("WM_DELETE_WINDOW", self._close)
         self.after(120, self._poll)
 
@@ -69,7 +72,18 @@ class MonitorApp(tk.Tk):
         for widget in (self.alignment_box, self.battery_time_box):
             widget.configure(state="readonly" if combined else "disabled")
 
+    def _window_resized(self, event):
+        if event.widget is not self or self.narrow == (event.width < self.px(900)):
+            return
+        self.narrow = not self.narrow
+        if self.narrow and self.config_visible:
+            self.toggle_config()
+            self.config_auto_hidden = True
+        elif not self.narrow and self.config_auto_hidden and not self.config_visible:
+            self.toggle_config()
+
     def toggle_config(self):
+        self.config_auto_hidden = False
         if self.config_visible:
             self.sidebar.grid_remove()
             self.config_button.configure(text="显示设置")

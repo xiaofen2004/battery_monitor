@@ -4,6 +4,7 @@ import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
 from matplotlib.ticker import MaxNLocator
+from matplotlib.transforms import ScaledTranslation
 
 matplotlib.rcParams.update({"font.sans-serif": ["Microsoft YaHei", "SimHei", "DejaVu Sans"],
                             "axes.unicode_minus": False, "font.size": 10})
@@ -41,7 +42,13 @@ def battery_line(t, y):
 def fit_bottom_margin(figure):
     """保持时间刻度和轴标题的实际留白，窗口变矮时不被工具栏裁掉。"""
     if figure.axes:
-        figure.subplots_adjust(bottom=min(.22, max(.09, .68 / figure.get_figheight())))
+        height = figure.get_figheight()
+        bottom = min(.22, max(.09, .68 / height))
+        figure.subplots_adjust(bottom=bottom, top=max(bottom + .1, 1 - getattr(figure, "header_inches", .9) / height))
+
+
+def from_top(figure, points):
+    return figure.transFigure + ScaledTranslation(0, -points / 72, figure.dpi_scale_trans)
 
 
 def draw_plot(data, figure=None):
@@ -68,15 +75,16 @@ def draw_plot(data, figure=None):
     for i, (channel, values) in enumerate(strains.items()):
         axis = axes[i] if split else axes[0]
         color = colors[i]
-        curve(axis, data.strain_t, values, color, channel)
+        line = curve(axis, data.strain_t, values, color, channel)
         compact_ylabel = "Δε / με" if data.settings.delta else "ε / με"
         axis.set_ylabel(compact_ylabel if split else ylabel, fontsize=10, labelpad=10)
         if split or len(strains) == 1:
             axis.tick_params(axis="y", colors=color)
             axis.yaxis.label.set_color(color)
         if split:
-            axis.text(.012, .90, channel, transform=axis.transAxes, va="top", color=color,
-                      fontsize=10, weight="bold", bbox=dict(facecolor="white", edgecolor="none", alpha=.85, pad=2))
+            tag = axis.legend([line], [channel], loc="best", handlelength=0, handletextpad=0, borderaxespad=.4,
+                              borderpad=.25, framealpha=.85, edgecolor="none", fontsize=10)
+            tag.get_texts()[0].set(color=color, weight="bold")
             axis.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
 
     if combined:
@@ -118,15 +126,15 @@ def draw_plot(data, figure=None):
                  else "两文件首点对齐") if combined else f"采集起点 {clock_text(data.origin)}")
     if split:
         subtitle += "   ·   " + ("Δ 微应变" if data.settings.delta else "原始微应变")
-    fig.text(.09, .975, title, va="top", fontsize=14, weight="bold", color="#20324b")
-    fig.text(.09, .935, subtitle, va="top", fontsize=9, color="#64748b")
+    fig.text(.09, 1, title, va="top", fontsize=14, weight="bold", color="#20324b", transform=from_top(fig, 8))
+    fig.text(.09, 1, subtitle, va="top", fontsize=9, color="#64748b", transform=from_top(fig, 27))
     # 独立一行图例，不与标题争用横向空间。
     legend = curves + ([Patch(facecolor=color, label=name) for name, color in STAGE_COLORS.items()] if combined else [])
     cols = min(len(legend), 4 if combined else 3)
-    fig.legend(handles=legend, loc="upper left", bbox_to_anchor=(.085, .899), ncol=cols,
+    fig.legend(handles=legend, loc="upper left", bbox_to_anchor=(.085, 1), bbox_transform=from_top(fig, 40), ncol=cols,
                frameon=False, fontsize=9, borderaxespad=0, columnspacing=1.8)
     right = .89 if split and combined else (.77 if combined else .965)
-    fig.subplots_adjust(left=.105, right=right, top=.79 if combined else .835,
-                        hspace=.20)
+    fig.header_inches = (85 if combined else 66) / 72
+    fig.subplots_adjust(left=.105, right=right, hspace=.20)
     fit_bottom_margin(fig)
     return fig
