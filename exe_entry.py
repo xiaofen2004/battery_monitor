@@ -51,7 +51,7 @@ def main():
         try:
             log.write_text(detail, encoding="utf-8")
         except OSError:
-            log = Path(os.environ.get("TEMP", str(root))) / "battery_monitor_startup_error.log"
+            log = Path(os.environ.get("TEMP", str(root))) / "battery_strain_monitor_startup_error.log"
             log.write_text(detail, encoding="utf-8")
         import ctypes
         ctypes.windll.user32.MessageBoxW(None, "程序启动失败，错误详情已保存到：\n" + str(log), "电池监测", 0x10)

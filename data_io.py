@@ -58,7 +58,7 @@ def check_cancel(cancel):
 def snapshot(path, cancel=None):
     """仅复制一次完整、稳定的磁盘版本，临时文件退出时删除。"""
     before = stamp(path)
-    with tempfile.TemporaryDirectory(prefix="battery_monitor_") as folder:
+    with tempfile.TemporaryDirectory(prefix="battery_strain_monitor_") as folder:
         dest = Path(folder) / ("snapshot" + Path(path).suffix)
         with shared_read(path) as source, dest.open("wb") as target:
             remaining = before[0]
